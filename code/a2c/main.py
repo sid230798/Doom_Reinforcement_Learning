@@ -3,7 +3,7 @@ from argparse import ArgumentParser
 
 from env import VizdoomGame
 from env import TestGame
-from model import actor_critic
+from model import actor_critic, DEFAULT_GAME
 
 # BASE_DIR = parent directory of code directory
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -11,7 +11,6 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__fil
 # Configuration file path
 DEFAULT_MODEL_SAVEFILE = "tmp/a2c/model.tf"
 DEFAULT_CONFIG = "health_gathering.cfg"
-DEFAULT_GAME = "Vizdoom"
 
 if __name__ == "__main__":
     os.chdir(BASE_DIR)
@@ -33,7 +32,7 @@ if __name__ == "__main__":
 
     env = None
     if args.game == DEFAULT_GAME:
-        env = VizdoomGame(args.config)
+        env = VizdoomGame(args.game, args.config)
     else:
         env = TestGame(args.game)
 
