@@ -44,8 +44,8 @@ def test_environment():
     game.set_doom_scenario_path("basic.wad")
     game.init()
     shoot = [0, 0, 1]
-    left = [1, 0, 0]
-    right = [0, 1, 0]
+    left = [1, 0, 1]
+    right = [0, 1, 1]
     actions = [shoot, left, right]
 
     episodes = 10
@@ -56,9 +56,7 @@ def test_environment():
             img = state.screen_buffer
             misc = state.game_variables
             action = random.choice(actions)
-            print(action)
             reward = game.make_action(action)
-            print ("\treward:", reward)
             time.sleep(0.02)
         print ("Result:", game.get_total_reward())
         time.sleep(2)
