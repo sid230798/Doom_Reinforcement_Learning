@@ -40,6 +40,8 @@ class VizdoomGame(Env):
     # TODO
     pass
 
-class TestGame0(Env):
-    # TODO
+class TestGame(Env):
+    """
+    TestGame provide env for openai gym games e.g. CartPole-v0
+    """
     pass
