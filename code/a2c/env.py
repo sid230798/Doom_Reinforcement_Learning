@@ -1,8 +1,13 @@
 import inspect
 import sys
+import itertools as it
 
 import gym
+import skimage
 import vizdoom
+import numpy as np
+
+from settings import *
 
 def raiseNotDefined():
     fileName = inspect.stack()[1][1]
@@ -37,7 +42,13 @@ class Env:
 
     def reset(self):
         """
-        reset: resets the game enviornment
+        reset: resets the env enviornment
+        """
+        raiseNotDefined()
+
+    def render(self):
+        """
+        render: renders the env enviornment
         """
         raiseNotDefined()
 
@@ -48,41 +59,66 @@ class Env:
         raiseNotDefined()
 
 # TODO: Define Vizdoom enviornment
+
+
 class VizdoomGame(Env):
-    def __init__(self, env_name, env_config):
+    def __init__(self, env_name, env_config, visible=False):
         self.env_name = env_name
-        self.env = VizdoomGame.initialize_vizdoom(env_config)
+        self.env = VizdoomGame.initialize_vizdoom(env_config, visible)
         self.is_visible = False
+        n = self.env.get_available_buttons_size()
+        self.available_actions = [list(a) for a in it.product([0, 1], repeat=n)]
 
     def observation_space_size(self):
-        pass
+        return tuple(RESOLUTION + [1])
 
-    def action_sapce_size(self):
-        pass
+    def action_space_size(self):
+        n = self.env.get_available_buttons_size()
+        return 2**n
 
     def step(self, action):
-        pass
+        action = self.available_actions[action]
+        state, reward = self.env.get_state(), self.env.make_action(action)
+        done = self.env.is_episode_finished()
+        state = VizdoomGame.preprocess(state.screen_buffer)
+        state.resize(RESOLUTION + [1])
+        return state, reward, done, None
 
     def reset(self):
-        pass
+        self.env.new_episode()
+        s1 = VizdoomGame.preprocess(self.env.get_state().screen_buffer)
+        s1.resize(RESOLUTION + [1])
+        return s1
+
+    def render(self):
+        None
 
     def set_visible(self, visible=True):
         self.is_visible = visible
         self.env.set_window_visible(self.is_visible)
+        self.env.set_mode(vzd.Mode.ASYNC_PLAYER)
+        self.env.init()
+
 
     # Creates and initializes ViZDoom environment.
     @staticmethod
-    def initialize_vizdoom(config_file_path):
+    def initialize_vizdoom(config_file_path, visible):
         print("Initializing doom...")
-        game = vizdoom.DoomGame()
-        game.load_config(config_file_path)
-        game.set_window_visible(False)
-        game.set_mode(vizdoom.Mode.PLAYER)
-        game.set_screen_format(vizdoom.ScreenFormat.GRAY8)
-        game.set_screen_resolution(vizdoom.ScreenResolution.RES_640X480)
-        game.init()
+        env = vizdoom.DoomGame()
+        env.load_config(config_file_path)
+        env.set_window_visible(visible)
+        env.set_mode(vizdoom.Mode.PLAYER)
+        env.set_screen_format(vizdoom.ScreenFormat.GRAY8)
+        env.set_screen_resolution(vizdoom.ScreenResolution.RES_640X480)
+        env.init()
         print("Doom initialized.")
-        return game
+        return env
+
+    @staticmethod
+    def preprocess(img):
+        img = skimage.transform.resize(img, RESOLUTION)
+        img = img.astype(np.float32)
+        return img
 
 
 class TestGame(Env):
@@ -90,22 +126,26 @@ class TestGame(Env):
     TestGame provide env for openai gym games e.g. CartPole-v0
     """
     def __init__(self, env_name):
+        print(env_name)
         self.env_name = env_name
         self.env = gym.make(env_name)
         self.env.reset()
         self.is_visible = False
     
     def observation_space_size(self):
-        return self.env.observation_space.shape[0]
+        return self.env.observation_space.shape
 
-    def action_sapce_size(self):
-        return self.env.action_sapce.n
+    def action_space_size(self):
+        return self.env.action_space.n
 
     def step(self, action):
         return self.env.step(action)
 
     def reset(self):
-        self.env.reset()
+        return self.env.reset()
+
+    def render(self):
+        self.env.render()
 
     def set_visible(self, visible=True):
         self.is_visible = visible
