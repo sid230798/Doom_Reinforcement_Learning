@@ -79,7 +79,7 @@ class VizdoomGame(Env):
         return 3
 
     def step(self, action):
-        # print(action, self.available_actions[action])
+        print("\t\t\t{}".format(action), end="\r")
         action = self.available_actions[action]
         state, reward = self.env.get_state(), self.env.make_action(action)
         done = self.env.is_episode_finished()

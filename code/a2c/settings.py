@@ -18,3 +18,6 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__fil
 DEFAULT_MODEL_SAVEFILE = "tmp/a2c/model-{}-ckpt-{}.tf"
 DEFAULT_CONFIG = "config/basic.cfg"
 DEFAULT_CHECKPOINT = "5"
+
+EXPLORATION_RATE=0.95
+EXPLORATION_DECAY_RATE = 0.9999
