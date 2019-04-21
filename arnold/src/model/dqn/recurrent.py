@@ -104,7 +104,7 @@ class DQNRecurrent(DQN):
         # do not return the recurrent state
         return output[:-1]
 
-    def f_train(self, screens, variables, features, actions, rewards, isfinal,
+    def f_train(self, screens, variables, features, actions, rewards, isfinal,tree_weights,tree_index,
                 loss_history=None):
 
         screens, variables, features, actions, rewards, isfinal = \
@@ -165,20 +165,18 @@ class DQNRecurrent(DQN):
                 self.params.gamma * target_qs* (1 - isfinal[:, -1])
             )
         else:
-            scores2 = rewards[:, -1] + (
-                    self.params.gamma * output_sc[:, 1:, :].max(2)[0] * (1 - isfinal[:, -1])
-            )
 
-        scores2 = rewards + (
-            self.params.gamma * output_sc[:, 1:, :].max(2)[0] * (1 - isfinal)
-        )
+                scores2 = rewards + (
+                    self.params.gamma * output_sc[:, 1:, :].max(2)[0] * (1 - isfinal)
+                )
 
         # dqn loss
         loss_sc = self.loss_fn_sc(
             scores1.view(batch_size, -1)[:, -self.params.n_rec_updates:],
             Variable(scores2.data[:, -self.params.n_rec_updates:])
         )
-
+        
+        abs_loss=0
         # game features loss
         if self.n_features:
             loss_gf = self.loss_fn_gf(output_gf, features.float())
@@ -187,7 +185,7 @@ class DQNRecurrent(DQN):
 
         self.register_loss(loss_history, loss_sc, loss_gf)
 
-        return loss_sc, loss_gf
+        return loss_sc, loss_gf,abs_loss
 
     @staticmethod
     def register_args(parser):

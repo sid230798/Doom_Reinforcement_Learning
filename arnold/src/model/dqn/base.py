@@ -231,7 +231,7 @@ class DQN(object):
         # print(action_id.item())
 
         self.pred_features = pred_features
-        return action_id.item()
+        return action_id
 
     @staticmethod
     def register_args(parser):
