@@ -48,7 +48,7 @@ def test_environment():
     right = [0, 1, 1]
     actions = [shoot, left, right]
 
-    episodes = 10
+    episodes = 1
     for i in range(episodes):
         game.new_episode()
         while not game.is_episode_finished():
@@ -58,7 +58,7 @@ def test_environment():
             action = random.choice(actions)
             reward = game.make_action(action)
             time.sleep(0.02)
-        print ("Result:", game.get_total_reward())
+        print("Result:", game.get_total_reward())
         time.sleep(2)
     game.close()
 

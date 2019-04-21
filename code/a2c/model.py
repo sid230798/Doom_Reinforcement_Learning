@@ -1,37 +1,23 @@
-import tensorflow as tf
-import tensorflow.keras as keras
+from models import GymModel, VizdoomModel, A2CAgent
 
-from env import raiseNotDefined
+from settings import *
 
-DEFAULT_GAME = "Vizdoom"
-
-HIDDEN_SIZE = 6
-
-def actor_critic(env, epoch, alphaA=3e-4, alphaC=3e-4):
+def actor_critic(env, testEnv=None):
     num_inputs = env.observation_space_size()
-    num_actions = len(env.action_space_size())
+    num_actions = env.action_space_size()
 
     # TODO: actor and critic model
     # actor: π(•|s), critic: Q(s, a)
-    actor_model = None  
-    critic_model = None
-
-    # TODO: 1. model for Vizdoom
+    agent = None
 
     if env.env_name == DEFAULT_GAME:
-        raiseNotDefined()
+        agent = A2CAgent(VizdoomModel(num_actions))
     else:
-        actor_model = keras.Sequential([
-            keras.layers.Flatten(input_shape=(1, num_inputs)),
-            keras.layers.Dense(HIDDEN_SIZE, activation=tf.nn.relu),
-            keras.layers.Dense(1),
-        ])
+        agent = A2CAgent(GymModel(num_actions))
 
-        critic_model = keras.Sequential([
-            keras.layers.Flatten(input_shape=(1, num_inputs)),
-            keras.layers.Dense(HIDDEN_SIZE, activation=tf.nn.relu),
-            keras.layers.Dense(num_actions, activation=tf.nn.softmax),
-        ])
-
-    env.reset()
-    # TODO: execute a2c
+    reward_history = agent.train(env)
+    print('Training finished...')
+    if testEnv is not None:
+        print("{} out of 200".format(agent.test(testEnv)))
+    else:
+        print("{} out of 200".format(agent.test(env)))
