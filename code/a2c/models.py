@@ -51,7 +51,6 @@ class Model(tf.keras.Model):
         else:
             action = np.argmax(logits, axis=1)
 
-
         return np.squeeze(action, axis=-1), np.squeeze(value, axis=-1)
 
 
