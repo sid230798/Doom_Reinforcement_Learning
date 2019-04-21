@@ -3,6 +3,7 @@ import os
 import numpy as np
 from logging import getLogger
 
+from .replay_memory_prior import ReplayMemoryPrior
 from .utils import get_optimizer
 from .replay_memory import ReplayMemory
 
@@ -12,7 +13,7 @@ logger = getLogger()
 
 class Trainer(object):
 
-    def __init__(self, params, game, network, eval_fn, parameter_server=None):
+    def __init__(self, params, game, network, eval_fn,parameter_server=None):
         optim_fn, optim_params = get_optimizer(params.optimizer)
         self.optimizer = optim_fn(network.module.parameters(), **optim_params)
         self.parameter_server = parameter_server
@@ -23,6 +24,9 @@ class Trainer(object):
         self.state_dict = self.network.module.state_dict()
         self.n_iter = 0
         self.best_score = -1000000
+        # self.tar_network=tar_network
+        if self.params.fixed_q:
+            self.tar_optimizer=optim_fn(network.tar_network.module.parameters(), **optim_params)
 
     def start_game(self):
         map_id = np.random.choice(self.params.map_ids_train)
@@ -74,18 +78,26 @@ class Trainer(object):
                 self.network.module.eval()
                 action = self.network.next_action(last_states, save_graph=True)
                 self.network.module.train()
+                # print('eval',action.size())
+
             if random_action:
                 action = np.random.randint(self.params.n_actions)
 
             # perform the action, and skip some frames
-            self.game.make_action(action, self.params.frame_skip)
+            # print('action',action)
+            self.game.make_action(action, self.params.frame_skip)       #....Must be Int Convert Tensor to int or list
 
             # save last screens / features / action
             self.game_iter(last_states, action)
 
-            # evaluation
+            # evaluation after a few steps of actions.
             if (self.n_iter - last_eval_iter) % self.params.eval_freq == 0:
                 self.evaluate_model(start_iter)
+                last_eval_iter = self.n_iter
+
+            # Update Q-targets after a few steps of actions.
+            if self.params.fixed_q and (self.n_iter - last_eval_iter) % self.params.update_freq == 0 :
+                self.update_model()
                 last_eval_iter = self.n_iter
 
             # periodically dump the model
@@ -103,6 +115,7 @@ class Trainer(object):
             train_loss = self.training_step(current_loss)
             if train_loss is None:
                 continue
+            print(sum(train_loss) ,sum(train_loss).size() )
 
             # backward
             self.optimizer.zero_grad()
@@ -149,6 +162,10 @@ class Trainer(object):
         self.network.module.train()
         self.start_game()
 
+    def update_model(self):
+        self.network.tar_network.load_state_dict(self.network.state_dict())  # copy state
+        self.tar_optimizer.load_state_dict(self.optimizer.state_dict())  # copy state
+
     def dump_model(self, start_iter):
         model_name = 'periodic-%i.pth' % (self.n_iter - start_iter)
         model_path = os.path.join(self.params.dump_path, model_name)
@@ -192,11 +209,18 @@ class ReplayMemoryTrainer(Trainer):
         super(ReplayMemoryTrainer, self).__init__(params, *args, **kwargs)
 
         # initialize the replay memory
-        self.replay_memory = ReplayMemory(
-            params.replay_memory_size,
-            (params.n_fm, params.height, params.width),
-            params.n_variables, params.n_features
-        )
+        if params.prior :
+            self.replay_memory = ReplayMemoryPrior(
+                params.replay_memory_size,
+                (params.n_fm, params.height, params.width),
+                params.n_variables, params.n_features
+            )
+        else :
+            self.replay_memory = ReplayMemory(
+                params.replay_memory_size,
+                (params.n_fm, params.height, params.width),
+                params.n_variables, params.n_features
+            )
 
     def game_iter(self, last_states, action):
         # store the transition in the replay table
@@ -223,4 +247,15 @@ class ReplayMemoryTrainer(Trainer):
             self.params.hist_size + (0 if self.params.recurrence == ''
                                      else self.params.n_rec_updates - 1)
         )
-        return self.network.f_train(loss_history=current_loss, **memory)
+
+        loss_sc, loss_gf,abs_loss = self.network.f_train(loss_history=current_loss, **memory)
+        print(memory['tree_index'])
+        self.replay_memory.batch_update(memory['tree_index'], abs_loss)
+        #print('loss ',abs_loss,abs_loss.size())
+        #print('loss ',loss_sc,loss_sc.size())
+        #print('loss ',loss_gf)
+        # abs_loss_mean= torch.mean(abs_loss,0)
+        # print(loss_sc, type(loss_sc))
+        # print('lossmean ',abs_loss_mean,abs_loss_mean.size())
+        # return ( loss_sc, loss_gf,abs_loss_mean )
+        return ( loss_sc, loss_gf )

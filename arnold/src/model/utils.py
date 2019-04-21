@@ -39,6 +39,15 @@ def value_loss(delta):
             return loss.mean()
         return loss_fn
 
+def weighted_mse_loss(input, target, weight):
+    print("MSE " ,torch.Tensor(weight).size(),torch.Tensor(weight))
+    print(input.size(),input)
+    print(target.size(),target)
+    print ((torch.Tensor(weight) * (input - target) ** 2).mean())
+    return (torch.Tensor(weight) * (input - target) ** 2).mean()
+
+def abs_mse_loss(input, target):
+    return (input - target).abs()
 
 def build_CNN_network(module, params):
     """

@@ -1,3 +1,5 @@
+import copy
+
 import numpy as np
 import torch
 import torch.nn as nn
@@ -5,7 +7,7 @@ from torch.autograd import Variable
 from logging import getLogger
 
 from ...utils import bool_flag
-from ..utils import value_loss, build_CNN_network
+from ..utils import value_loss, build_CNN_network, weighted_mse_loss, abs_mse_loss
 from ..utils import build_game_variables_network, build_game_features_network
 
 
@@ -39,6 +41,8 @@ class DQNModuleBase(nn.Module):
         self.dueling_network = params.dueling_network
         if self.dueling_network:
             self.proj_state_values = nn.Linear(params.hidden_dim, 1)
+
+
 
         # log hidden layer sizes
         logger.info('Conv layer output dim : %i' % self.conv_output_dim)
@@ -110,8 +114,18 @@ class DQN(object):
 
         # main module + loss functions
         self.module = self.DQNModuleClass(params)
-        self.loss_fn_sc = value_loss(params.clip_delta)
+        if params.prior:
+            self.loss_fn_sc = weighted_mse_loss
+            self.loss_abs_fn_sc = abs_mse_loss
+        else:
+            self.loss_fn_sc = value_loss(params.clip_delta)
+
         self.loss_fn_gf = nn.BCELoss()
+
+        print("Fized Q : ",params.fixed_q)
+        self.fixed_q = params.fixed_q
+        if self.fixed_q:
+            self.tar_network = copy.deepcopy(self)
 
         # cuda
         self.cuda = params.gpu_id >= 0
@@ -145,8 +159,7 @@ class DQN(object):
 
         if self.n_variables:
             variables = np.int64([s.variables for s in last_states])
-            print(variables)
-
+            # print(variables)
             variables = self.get_var(torch.LongTensor(variables))
             assert variables.size() == (self.hist_size, self.n_variables)
         else:
@@ -193,6 +206,7 @@ class DQN(object):
 
     def next_action(self, last_states, save_graph=False):
         scores, pred_features = self.f_eval(last_states)      ## sorted list for scores and pred_features
+
         if self.params.network_type == 'dqn_ff':
             assert scores.size() == (1, self.module.n_actions)
             scores = scores[0]
@@ -207,7 +221,15 @@ class DQN(object):
             if pred_features is not None:
                 assert pred_features.size() == (1, seq_len, self.module.n_features)
                 pred_features = pred_features[0, -1]
+        # print('1 ',scores)
+        # print('2 ',scores.data)
+        # print('3 ',scores.data.max(0))         ## Returns the maximum value of each row of the input tensor in the rows. The second return value is the index location of each maximum value found (argmax).
+        # print( scores.data.max(0)[1][0] )
+        # print( scores.data.max(0)[1][0].item() )
         action_id = scores.data.max(0)[1][0]
+        # print(type(action_id),action_id )
+        # print(action_id.item())
+
         self.pred_features = pred_features
         return action_id
 

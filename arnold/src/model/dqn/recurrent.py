@@ -76,6 +76,11 @@ class DQNRecurrent(DQN):
     def f_eval(self, last_states):
 
         screens, variables = self.prepare_f_eval_args(last_states)
+        # print(variables.size())
+        # print(variables)
+        #
+        # for i in range(self.params.n_variables):
+        #     print( variables[-1:, i].ndimension())
 
         # if we remember the whole sequence, only feed the last frame
         if self.params.remember:
@@ -99,7 +104,7 @@ class DQNRecurrent(DQN):
         # do not return the recurrent state
         return output[:-1]
 
-    def f_train(self, screens, variables, features, actions, rewards, isfinal,
+    def f_train(self, screens, variables, features, actions, rewards, isfinal,tree_weights,tree_index,
                 loss_history=None):
 
         screens, variables, features, actions, rewards, isfinal = \
@@ -108,6 +113,10 @@ class DQNRecurrent(DQN):
 
         batch_size = self.params.batch_size
         seq_len = self.hist_size + self.params.n_rec_updates
+
+        # print(type(variables),variables.size(), variables)
+        # print(variables[:, -1, :].size(),variables[:, -1, :])
+        # print(variables[:, -2, :].size(),variables[:, -2, :])
 
         output_sc, output_gf, _ = self.module(
             screens,
@@ -121,16 +130,53 @@ class DQNRecurrent(DQN):
             for j in range(seq_len - 1):
                 mask[i, j, int(actions[i, j])] = 1
         scores1 = output_sc.masked_select(self.get_var(mask))
-        scores2 = rewards + (
-            self.params.gamma * output_sc[:, 1:, :].max(2)[0] * (1 - isfinal)
-        )
+
+        if self.params.fixed_q:
+
+            tar_output_sc,tar_output_gf, _ = self.tar_network.module(
+                screens,
+                [variables[:, :, i] for i in range(self.params.n_variables)],
+                prev_state=self.init_state_t
+            )
+            # print("Tar get Ouptut ",tar_output_sc2.size())
+            # print("Sime Ouptut ",output_sc.size())
+            # print("Sime Ouptut ",output_sc[:, 1:, :].size())
+            #
+            # print("Sime Ouptut ",output_sc[:, 1:, :].max(2))
+            # print("Sime Ouptut ",output_sc[:, 1:, :].max(2)[1].tolist() )
+
+            #print(output_sc2.max(1)[1].size())
+            # print(output_sc2.max(1)[0])
+            # print( output_sc2.max(0)[1] )
+            target_qs = []
+            q_list=output_sc[:, 1:, :].max(2)[1].tolist()
+            for i in range(len(q_list)):                ##batchsize
+                for j in range(len(q_list[0])):         ##hist_size
+                    target_qs. append( tar_output_sc[i][j][ q_list[i][j] ].tolist() )
+
+            target_qs = torch.Tensor(target_qs)
+            # print(target_qs.size())
+            target_qs= target_qs.reshape( (len(q_list),len(q_list[0]),-1) )
+            # print(target_qs.size())
+            #print("Tagrget : ",target_qs, end='\n\n')
+            # print(target_qs, end='\n\n')
+
+            scores2 = rewards[:, -1] + (
+                self.params.gamma * target_qs* (1 - isfinal[:, -1])
+            )
+        else:
+
+                scores2 = rewards + (
+                    self.params.gamma * output_sc[:, 1:, :].max(2)[0] * (1 - isfinal)
+                )
 
         # dqn loss
         loss_sc = self.loss_fn_sc(
             scores1.view(batch_size, -1)[:, -self.params.n_rec_updates:],
             Variable(scores2.data[:, -self.params.n_rec_updates:])
         )
-
+        
+        abs_loss=0
         # game features loss
         if self.n_features:
             loss_gf = self.loss_fn_gf(output_gf, features.float())
@@ -139,7 +185,7 @@ class DQNRecurrent(DQN):
 
         self.register_loss(loss_history, loss_sc, loss_gf)
 
-        return loss_sc, loss_gf
+        return loss_sc, loss_gf,abs_loss
 
     @staticmethod
     def register_args(parser):

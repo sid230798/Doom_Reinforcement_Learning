@@ -99,5 +99,11 @@ class ReplayMemory:
             features=features,
             actions=actions,
             rewards=rewards,
-            isfinal=isfinal
+            isfinal=isfinal,
+            tree_weights=None,
+            tree_index=None
         )
+
+    def batch_update(self,tree_idx, abs_errors):
+
+        return

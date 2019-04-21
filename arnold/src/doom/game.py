@@ -161,10 +161,10 @@ class Game(object):
 
         # check parameters
         # if RESOURCES_DIR.is_dir():
-
-        print(os.listdir(RESOURCES_DIR))
-        print(self.scenario_path)
-        print("pod")
+        #
+        # print(os.listdir(RESOURCES_DIR))
+        # print(self.scenario_path)
+        # print("pod")
         assert os.path.isfile(self.scenario_path)
         assert os.path.isfile(self.game_path)
         assert hasattr(GameVariable, score_variable)

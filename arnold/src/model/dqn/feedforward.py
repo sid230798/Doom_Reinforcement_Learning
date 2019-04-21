@@ -22,8 +22,8 @@ class DQNModuleFeedforward(DQNModuleBase):
 
         batch_size = x_screens.size(0)
         # print( x_variables)
-        for x in x_variables:
-            print(x.ndimension() ,x.size(0) , batch_size )
+        # for x in x_variables:
+        #     print(x.ndimension() ,x.size(0) , batch_size )
         assert x_screens.ndimension() == 4
         assert len(x_variables) == self.n_variables
         assert all(x.ndimension() == 1 and x.size(0) == batch_size for x in x_variables)
@@ -47,15 +47,17 @@ class DQNFeedforward(DQN):
     def f_eval(self, last_states):
 
         screens, variables = self.prepare_f_eval_args(last_states)
-        for i in range(self.params.n_variables):
-            print( variables[-1, i].size())
+        # print(variables.size())
+        # print(variables)
 
+        for i in range(self.params.n_variables):
+            print( variables[-1, i].ndimension())
         return self.module(
             screens.view(1, -1, *self.screen_shape[1:]),
-            [variables[-1, i] for i in range(self.params.n_variables)]
+            [variables[-1:, i] for i in range(self.params.n_variables)]
         )
 
-    def f_train(self, screens, variables, features, actions, rewards, isfinal,
+    def f_train(self, screens, variables, features, actions, rewards, isfinal,tree_weights,tree_index,
                 loss_history=None):
 
         screens, variables, features, actions, rewards, isfinal = \
@@ -67,14 +69,15 @@ class DQNFeedforward(DQN):
 
         screens = screens.view(batch_size, seq_len * self.params.n_fm,
                                *self.screen_shape[1:])
+        #print(type(variables),variables)
 
         output_sc1, output_gf1 = self.module(
             screens[:, :-self.params.n_fm, :, :],
-            [variables[:, -2, i] for i in range(self.params.n_variables)]
+            [variables[:, -1, i] for i in range(self.params.n_variables)]
         )
         output_sc2, output_gf2 = self.module(
             screens[:, self.params.n_fm:, :, :],
-            [variables[:, -1, i] for i in range(self.params.n_variables)]
+            [variables[:, -2, i] for i in range(self.params.n_variables)]
         )
 
         # compute scores
@@ -82,12 +85,44 @@ class DQNFeedforward(DQN):
         for i in range(batch_size):
             mask[i, int(actions[i, -1])] = 1
         scores1 = output_sc1.masked_select(self.get_var(mask))
-        scores2 = rewards[:, -1] + (
-            self.params.gamma * output_sc2.max(1)[0] * (1 - isfinal[:, -1])
-        )
+
+
+        if self.params.fixed_q:
+
+            tar_output_sc2, _ = self.tar_network.module(
+                screens[:, self.params.n_fm:, :, :],
+                [variables[:, -2, i] for i in range(self.params.n_variables)]
+            )
+            #print("Tar get Ouptut ",tar_output_sc2.size())
+            #print("Sime Ouptut ",output_sc2.max(1)[1].size())
+
+            #print(output_sc2.max(1)[1].size())
+            # print(output_sc2.max(1)[0])
+            # print( output_sc2.max(0)[1] )
+            target_qs=  [ tar_output_sc2[count][i].tolist()  for count,i in enumerate(output_sc2.max(1)[1].tolist()) ]
+            target_qs = torch.Tensor(target_qs)
+            #print("Tagrget : ",target_qs, end='\n\n')
+            # print(target_qs, end='\n\n')
+
+            scores2 = rewards[:, -1] + (
+                self.params.gamma * target_qs* (1 - isfinal[:, -1])
+            )
+        else:
+            scores2 = rewards[:, -1] + (
+                    self.params.gamma * output_sc2.max(1)[0] * (1 - isfinal[:, -1])
+            )
 
         # dqn loss
-        loss_sc = self.loss_fn_sc(scores1, Variable(scores2.data))
+        abs_loss=0
+        print("Target : ",Variable(scores2.data))
+        print("Q-vals : ",scores1)
+
+        if self.params.prior:
+            loss_sc = self.loss_fn_sc(scores1, Variable(scores2.data),tree_weights)
+            abs_loss = self.loss_abs_fn_sc(scores1, Variable(scores2.data))
+        else:
+
+            loss_sc = self.loss_fn_sc(scores1, Variable(scores2.data))
 
         # game features loss
         loss_gf = 0
@@ -97,7 +132,8 @@ class DQNFeedforward(DQN):
 
         self.register_loss(loss_history, loss_sc, loss_gf)
 
-        return loss_sc, loss_gf
+        print("Absolute Loss",abs_loss)
+        return loss_sc, loss_gf,abs_loss
 
     @staticmethod
     def validate_params(params):
