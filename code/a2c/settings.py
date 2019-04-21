@@ -8,8 +8,8 @@ NUM_STEPS = 300
 GAMMA = 0.95
 HIDDEN_SIZE = 6
 
-UPDATES = 100
-BATCH_SIZE = 64
+UPDATES = 1000
+BATCH_SIZE = 32
 
 # BASE_DIR = parent directory of code directory
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -18,3 +18,6 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__fil
 DEFAULT_MODEL_SAVEFILE = "tmp/a2c/model-{}-ckpt-{}.tf"
 DEFAULT_CONFIG = "config/basic.cfg"
 DEFAULT_CHECKPOINT = "5"
+
+EXPLORATION_RATE=0.95
+EXPLORATION_DECAY_RATE = 0.9999

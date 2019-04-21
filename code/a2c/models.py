@@ -11,6 +11,13 @@ tf.logging.set_verbosity(tf.logging.ERROR)
 
 from settings import *
 
+exploration_rate = EXPLORATION_RATE
+def change_rate():
+    if exploration_rate < 0.4:
+        return exploration_rate
+    else:
+        return exploration_rate * EXPLORATION_DECAY_RATE
+
 class ProbabilityDistribution(tf.keras.Model):
     def call(self, logits):
         # sample a random categorical action
@@ -29,10 +36,21 @@ class Model(tf.keras.Model):
         Qvals = self.critic(x)
         return action_prob, Qvals
 
-    def action_value(self, obs):
+    def action_value(self, obs, training=True):
+        global exploration_rate
+
         logits, value = self.predict(obs)
-        # print(logits)
-        action = self.dist.predict(logits)
+        if not training:
+            action = np.argmax(logits, axis=1)
+            return action[0], np.squeeze(value, axis=-1)
+
+        if np.random.uniform() < exploration_rate:
+            action = self.dist.predict(logits)
+            exploration_rate = change_rate()
+            print("\t\t\t\t\tExploring {}".format(exploration_rate), end='\r')
+        else:
+            action = np.argmax(logits, axis=1)
+
 
         return np.squeeze(action, axis=-1), np.squeeze(value, axis=-1)
 
@@ -137,7 +155,7 @@ class A2CAgent:
         for _ in range(times):
             obs, done, rewards = env.reset(), False, 0
             while not done:
-                action, _ = self.model.action_value(obs[None, :])
+                action, _ = self.model.action_value(obs[None, :], False)
                 obs, reward, done, _ = env.step(action)
                 rewards += reward
                 if render:
