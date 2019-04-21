@@ -1,8 +1,5 @@
 import os
 
-# disable tensorflow debugging
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3' 
-
 RESOLUTION = [30, 45]
 
 DEFAULT_GAME = "Vizdoom"

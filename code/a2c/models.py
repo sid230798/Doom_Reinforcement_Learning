@@ -1,6 +1,13 @@
+import os
+
+# disable tensorflow debugging
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3' 
+
 import numpy as np
 import tensorflow as tf
 import tensorflow.keras as keras
+
+tf.logging.set_verbosity(tf.logging.ERROR)
 
 from settings import *
 
