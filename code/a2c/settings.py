@@ -15,5 +15,6 @@ BATCH_SIZE = 64
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 # Configuration file path
-DEFAULT_MODEL_SAVEFILE = "tmp/a2c/model-{}.tf"
+DEFAULT_MODEL_SAVEFILE = "tmp/a2c/model-{}-ckpt-{}.tf"
 DEFAULT_CONFIG = "config/basic.cfg"
+DEFAULT_CHECKPOINT = "5"

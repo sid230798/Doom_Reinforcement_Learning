@@ -22,14 +22,16 @@ if __name__ == "__main__":
                         default=DEFAULT_GAME,
                         nargs="?",
                         help="Name of the game, e.g. Vizdoom(default), CartPole-v0, any other openai gym env.")
+
+    parser.add_argument(dest="ckpt", default=DEFAULT_CHECKPOINT, nargs="?", help="checkpoint to get model weights")
     
     args = parser.parse_args()
 
-    env, testEnv = None, None
+    env = None
     if args.game == DEFAULT_GAME:
         env = VizdoomGame(args.game, args.config)
         # testEnv = VizdoomGame(args.game, args.config, visible=True)
     else:
         env = TestGame(args.game)
 
-    actor_critic(env, testEnv)
+    actor_critic(env, args.ckpt)

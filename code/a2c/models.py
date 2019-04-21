@@ -100,6 +100,7 @@ class A2CAgent:
 
         episode_reward = [0.0]
         next_obs = env.reset()
+        ckpt = 0
         for update in range(UPDATES):
             print("Training {}".format(update), end='\r')
             for step in range(BATCH_SIZE):
@@ -116,7 +117,8 @@ class A2CAgent:
             returns, advs = self._returns_advantages(rewards, dones, values, next_value)
             act_adv = np.concatenate([actions[:, None], advs[:, None]], axis=-1)
             losses = self.model.train_on_batch(observations, [act_adv, returns])
-            self.model.save_weights(DEFAULT_MODEL_SAVEFILE.format(env.env_name))
+            self.model.save_weights(DEFAULT_MODEL_SAVEFILE.format(env.env_name, ckpt % 10))
+            ckpt = (ckpt + 1) % 10
         return episode_reward
 
     def _returns_advantages(self, rewards, dones, values, next_value):
