@@ -94,10 +94,17 @@ def parse_game_args(args):
                         help="GPU ID")
     parser.add_argument("--log_frequency", type=int, default=100,
                         help="Log frequency (in seconds)")
-
+    parser.add_argument("--fixed_q", type=bool, default=False,
+                        help="Using fixed q targets.")
+    parser.add_argument("--prior", type=bool, default=False,
+                        help="Using Priortize Experience Replay")
     # Parse known arguments
     params, _ = parser.parse_known_args(args)
+    BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    print(os.path.join(BASE_DIR, params.reload))
+    # print(params.reload)
 
+    #print("Reload PAth : ",params.reload)
     # check parameters
     assert len(params.dump_path) > 0 and os.path.isdir(params.dump_path)
     assert len(params.scenario) > 0
@@ -121,7 +128,6 @@ def finalize_args(params):
     params.n_variables = len(params.game_variables)
     params.n_features = sum(parse_game_features(params.game_features))
     params.n_fm = get_n_feature_maps(params)
-
     params.variable_dim = bcast_json_list(params.variable_dim, params.n_variables)
     params.bucket_size = bcast_json_list(params.bucket_size, params.n_variables)
 

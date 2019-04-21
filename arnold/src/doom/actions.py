@@ -94,6 +94,7 @@ class ActionBuilder(object):
                            for k in self.available_buttons]
             return doom_action
         else:
+            # print("Action",action)
             assert type(action) is int
             return self.doom_actions[action]
 

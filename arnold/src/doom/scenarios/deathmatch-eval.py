@@ -159,7 +159,7 @@ def evaluate_deathmatch(game, network, params, n_train_iter=None):
 
         n_iter = 0
         last_states = []
-
+        print(params.eval_time)
         while n_iter * params.frame_skip < params.eval_time * 35:
             n_iter += 1
 

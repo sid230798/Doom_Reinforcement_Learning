@@ -88,7 +88,7 @@ def process_buffers(game, params):
         # -x is faster than x * 255 and is equivalent for uint8
         __labels_buffer = -(_mapping[labels_buffer] ==
                             np.arange(1, 5)[:, None, None]).astype(np.uint8)
-        print('__labels-buffer',type(__labels_buffer ),__labels_buffer )
+        # print('__labels-buffer',type(__labels_buffer ),__labels_buffer )
 
         # evaluate game features based on labels buffer
         if game.use_game_features:
@@ -97,10 +97,10 @@ def process_buffers(game, params):
             visible = game.game.get_game_variable(GameVariable.USER1)
             assert visible in range(16)
             visible = int(visible)
-            print('visible',visible)
+            # print('visible',visible)
             game_features = [visible & (1 << i) > 0 for i, x
                              in enumerate(game.game_features) if x]
-            print('game_features',game_features)
+            # print('game_features',game_features)
             if params.dump_freq == 30003:
                 label_game_features = [np.any(x) for i, x in enumerate(__labels_buffer) if game.game_features[i + 1]]
                 if game.game_features[0]:
