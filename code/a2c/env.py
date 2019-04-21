@@ -58,8 +58,6 @@ class Env:
         """
         raiseNotDefined()
 
-# TODO: Define Vizdoom enviornment
-
 
 class VizdoomGame(Env):
     def __init__(self, env_name, env_config, visible=False):
@@ -77,6 +75,7 @@ class VizdoomGame(Env):
         return 2**n
 
     def step(self, action):
+        # print(action, self.available_actions[action])
         action = self.available_actions[action]
         state, reward = self.env.get_state(), self.env.make_action(action)
         done = self.env.is_episode_finished()
@@ -95,8 +94,9 @@ class VizdoomGame(Env):
 
     def set_visible(self, visible=True):
         self.is_visible = visible
+        self.env.close()
         self.env.set_window_visible(self.is_visible)
-        self.env.set_mode(vzd.Mode.ASYNC_PLAYER)
+        self.env.set_mode(vizdoom.Mode.ASYNC_PLAYER)
         self.env.init()
 
 

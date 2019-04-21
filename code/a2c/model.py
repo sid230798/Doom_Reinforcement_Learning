@@ -9,11 +9,23 @@ def actor_critic(env, testEnv=None):
     # TODO: actor and critic model
     # actor: π(•|s), critic: Q(s, a)
     agent = None
+    model = None
 
     if env.env_name == DEFAULT_GAME:
-        agent = A2CAgent(VizdoomModel(num_actions))
+        model = VizdoomModel(num_actions)
     else:
-        agent = A2CAgent(GymModel(num_actions))
+        model = GymModel(num_actions)
+
+    try:
+        model.load_weights(DEFAULT_MODEL_SAVEFILE.format(env.env_name))
+        print("Model loaded from {}".format(DEFAULT_MODEL_SAVEFILE.format(env.env_name)))
+    except:
+        pass
+
+    if env.env_name == DEFAULT_GAME:
+        agent = A2CAgent(model)
+    else:
+        agent = A2CAgent(model)
 
     reward_history = agent.train(env)
     print('Training finished...')
