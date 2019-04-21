@@ -8,8 +8,8 @@ NUM_STEPS = 300
 GAMMA = 0.95
 HIDDEN_SIZE = 6
 
-UPDATES = 100
-BATCH_SIZE = 64
+UPDATES = 4000
+BATCH_SIZE = 512
 
 # BASE_DIR = parent directory of code directory
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
