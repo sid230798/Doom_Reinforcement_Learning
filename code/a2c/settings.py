@@ -8,7 +8,7 @@ NUM_STEPS = 300
 GAMMA = 0.95
 HIDDEN_SIZE = 6
 
-UPDATES = 1000
+UPDATES = 100
 BATCH_SIZE = 64
 
 # BASE_DIR = parent directory of code directory

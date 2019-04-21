@@ -65,17 +65,21 @@ class VizdoomGame(Env):
         self.env = VizdoomGame.initialize_vizdoom(env_config, visible)
         self.is_visible = False
         n = self.env.get_available_buttons_size()
-        self.available_actions = [list(a) for a in it.product([0, 1], repeat=n)]
+        # self.available_actions = [list(a) for a in it.product([0, 1], repeat=n)]
+        left = [1, 0, 0]
+        right = [0, 1, 0]
+        shoot = [0, 0, 1]
+        self.available_actions = [left, right, shoot]
 
     def observation_space_size(self):
         return tuple(RESOLUTION + [1])
 
     def action_space_size(self):
         n = self.env.get_available_buttons_size()
-        return 2**n
+        return 3
 
     def step(self, action):
-        # print(action, self.available_actions[action])
+        print(action, self.available_actions[action])
         action = self.available_actions[action]
         state, reward = self.env.get_state(), self.env.make_action(action)
         done = self.env.is_episode_finished()
