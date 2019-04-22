@@ -11,3 +11,6 @@ fixed_q
 
 prior
 --scenario health_gathering --action_combinations "move_fb;turn_lr" --frame_skip 5  --prior True --replay_memory_size=1000 --dump_freq=1000
+
+--girish runs
+--scenario deathmatch --wad deathmatch_rockets --n_bots 8 --action_combinations move_fb;move_lr;turn_lr;attack --frame_skip 4 --game_features enemy --network_type dqn_rnn --recurrence lstm --replay_memory_size=1000 --main_dump_path=./dumped --dump_freq=20000 --hist_size 5 --update_freq 400 --exp_name dqnrnn_fq_DeathMatch --fixed_q True

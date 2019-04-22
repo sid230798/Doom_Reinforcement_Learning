@@ -152,23 +152,24 @@ class DQNRecurrent(DQN):
             q_list=output_sc[:, 1:, :].max(2)[1].tolist()
             for i in range(len(q_list)):                ##batchsize
                 for j in range(len(q_list[0])):         ##hist_size
-                    target_qs. append( tar_output_sc[i][j][ q_list[i][j] ].tolist() )
+                    target_qs. append( tar_output_sc[i][j][ q_list[i][j] ].item() )
 
             target_qs = torch.Tensor(target_qs)
             # print(target_qs.size())
             target_qs= target_qs.reshape( (len(q_list),len(q_list[0]),-1) )
+            target_qs = target_qs.mean(-1)
             # print(target_qs.size())
             #print("Tagrget : ",target_qs, end='\n\n')
             # print(target_qs, end='\n\n')
 
-            scores2 = rewards[:, -1] + (
-                self.params.gamma * target_qs* (1 - isfinal[:, -1])
+            scores2 = rewards + (
+                self.params.gamma * target_qs* (1 - isfinal)
             )
-        else:
 
-                scores2 = rewards + (
-                    self.params.gamma * output_sc[:, 1:, :].max(2)[0] * (1 - isfinal)
-                )
+        else:
+            scores2 = rewards + (
+                self.params.gamma * output_sc[:, 1:, :].max(2)[0] * (1 - isfinal)
+            )
 
         # dqn loss
         loss_sc = self.loss_fn_sc(
