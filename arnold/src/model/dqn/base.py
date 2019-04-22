@@ -7,7 +7,7 @@ from torch.autograd import Variable
 from logging import getLogger
 
 from ...utils import bool_flag
-from ..utils import value_loss, build_CNN_network, weighted_mse_loss, abs_mse_loss
+from ..utils import value_loss, build_CNN_network, weighted_mse_loss, abs_mse_loss, init_weights
 from ..utils import build_game_variables_network, build_game_features_network
 
 
@@ -42,7 +42,8 @@ class DQNModuleBase(nn.Module):
         if self.dueling_network:
             self.proj_state_values = nn.Linear(params.hidden_dim, 1)
 
-
+        if params.initalize:
+            self.apply(init_weights)
 
         # log hidden layer sizes
         logger.info('Conv layer output dim : %i' % self.conv_output_dim)

@@ -100,6 +100,9 @@ def parse_game_args(args):
                         help="Using fixed q targets whrn to update target network.")
     parser.add_argument("--prior", type=bool, default=False,
                         help="Using Priortize Experience Replay")
+    parser.add_argument("--initalize", type=bool, default=False,
+                        help="Using xavier for Linear and He intialization for CNN.")
+
     # Parse known arguments
     params, _ = parser.parse_known_args(args)
     BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))

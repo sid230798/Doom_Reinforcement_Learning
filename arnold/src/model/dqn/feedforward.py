@@ -99,7 +99,7 @@ class DQNFeedforward(DQN):
             #print(output_sc2.max(1)[1].size())
             # print(output_sc2.max(1)[0])
             # print( output_sc2.max(0)[1] )
-            target_qs=  [ tar_output_sc2[count][i].tolist()  for count,i in enumerate(output_sc2.max(1)[1].tolist()) ]
+            target_qs=  [ list(tar_output_sc2[count][i].data.numpy())  for count,i in enumerate( list(output_sc2.max(1)[1].data.numpy()) ) ]
             target_qs = torch.Tensor(target_qs)
             #print("Tagrget : ",target_qs, end='\n\n')
             # print(target_qs, end='\n\n')

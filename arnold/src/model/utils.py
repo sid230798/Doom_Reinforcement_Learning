@@ -49,6 +49,18 @@ def weighted_mse_loss(input, target, weight):
 def abs_mse_loss(input, target):
     return (input - target).abs()
 
+def init_weights(m):
+    if type(m) == nn.Linear:
+        torch.nn.init.xavier_uniform(m.weight)
+        m.bias.data.fill_(0.01)
+
+    if type(m) == nn.Conv2d :
+        torch.nn.init.kaiming_uniform_(m.weight)
+        m.bias.data.fill_(0.01)
+
+# net = nn.Sequential(nn.Linear(2, 2), nn.Linear(2, 2))
+# net.apply(init_weights)
+
 def build_CNN_network(module, params):
     """
     Build CNN network.

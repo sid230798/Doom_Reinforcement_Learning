@@ -149,7 +149,8 @@ class DQNRecurrent(DQN):
             # print(output_sc2.max(1)[0])
             # print( output_sc2.max(0)[1] )
             target_qs = []
-            q_list=output_sc[:, 1:, :].max(2)[1].tolist()
+
+            q_list=list(output_sc[:, 1:, :].max(2)[1].data.numpy())
             for i in range(len(q_list)):                ##batchsize
                 for j in range(len(q_list[0])):         ##hist_size
                     target_qs. append( tar_output_sc[i][j][ q_list[i][j] ].item() )
