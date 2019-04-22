@@ -114,8 +114,8 @@ class DQNFeedforward(DQN):
 
         # dqn loss
         abs_loss=0
-        print("Target : ",Variable(scores2.data))
-        print("Q-vals : ",scores1)
+        # print("Target : ",Variable(scores2.data))
+        # print("Q-vals : ",scores1)
 
         if self.params.prior:
             loss_sc = self.loss_fn_sc(scores1, Variable(scores2.data),tree_weights)
@@ -132,7 +132,7 @@ class DQNFeedforward(DQN):
 
         self.register_loss(loss_history, loss_sc, loss_gf)
 
-        print("Absolute Loss",abs_loss)
+        # print("Absolute Loss",abs_loss)
         return loss_sc, loss_gf,abs_loss
 
     @staticmethod

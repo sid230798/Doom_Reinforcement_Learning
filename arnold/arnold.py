@@ -17,7 +17,6 @@ assert len(args.exp_name.strip()) > 0
 
 dump_path = get_dump_path(args.main_dump_path, args.exp_name)
 
-
 print("Dump PAth : "+dump_path)
 logger = get_logger(filepath=os.path.join(dump_path, 'train.log'))
 logger.info('========== Running DOOM ==========')

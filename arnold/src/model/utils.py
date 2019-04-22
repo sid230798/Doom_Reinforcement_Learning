@@ -97,7 +97,7 @@ def build_game_variables_network(module, params):
     module.n_variables = params.n_variables
     module.game_variable_embeddings = []
     for i, (name, n_values) in enumerate(params.game_variables):
-        print('Embeddings',params.bucket_size[i], n_values,params.variable_dim[i] )
+        # print('Embeddings',params.bucket_size[i], n_values,params.variable_dim[i] )
         embeddings = BucketedEmbedding( params.bucket_size[i], n_values,
                                        params.variable_dim[i])
         setattr(module, '%s_emb' % name, embeddings)

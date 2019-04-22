@@ -108,3 +108,6 @@ venv.bak/
 
 .vscode
 .idea
+
+#saved models
+arnold/dumped

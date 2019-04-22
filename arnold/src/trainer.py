@@ -94,6 +94,7 @@ class Trainer(object):
             if (self.n_iter - last_eval_iter) % self.params.eval_freq == 0:
                 self.evaluate_model(start_iter)
                 last_eval_iter = self.n_iter
+            # print( "       update", self.params.update_freq)
 
             # Update Q-targets after a few steps of actions.
             if self.params.fixed_q and (self.n_iter - last_eval_iter) % self.params.update_freq == 0 :
@@ -115,7 +116,7 @@ class Trainer(object):
             train_loss = self.training_step(current_loss)
             if train_loss is None:
                 continue
-            print(sum(train_loss) ,sum(train_loss).size() )
+            # print(sum(train_loss) ,sum(train_loss).size() )
 
             # backward
             self.optimizer.zero_grad()
@@ -163,7 +164,7 @@ class Trainer(object):
         self.start_game()
 
     def update_model(self):
-        self.network.tar_network.load_state_dict(self.network.state_dict())  # copy state
+        self.network.tar_network.module.load_state_dict(self.network.module.state_dict())  # copy state
         self.tar_optimizer.load_state_dict(self.optimizer.state_dict())  # copy state
 
     def dump_model(self, start_iter):
@@ -249,7 +250,7 @@ class ReplayMemoryTrainer(Trainer):
         )
 
         loss_sc, loss_gf,abs_loss = self.network.f_train(loss_history=current_loss, **memory)
-        print(memory['tree_index'])
+        # print('mem',memory['tree_index'])
         self.replay_memory.batch_update(memory['tree_index'], abs_loss)
         #print('loss ',abs_loss,abs_loss.size())
         #print('loss ',loss_sc,loss_sc.size())
