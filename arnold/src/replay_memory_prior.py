@@ -52,10 +52,11 @@ class ReplayMemoryPrior(ReplayMemory):
         self.PER_b = np.min([1., self.PER_b + self.PER_b_increment_per_sampling])  # max = 1
 
         # Calculating the max_weight
-        p_min = np.min(self.tree.tree[-self.tree.capacity:]) / self.tree.total_priority
-
-        p_min = max(p_min, 0.002)
-        max_weight = (p_min * batch_size) ** (-self.PER_b)
+        # p_min = np.min(self.tree.tree[-self.tree.capacity:]) / self.tree.total_priority
+        #
+        # p_min = max(p_min, 0.002)
+        # max_weight = (p_min * batch_size) ** (-self.PER_b)
+        # max_weight = max( max_weight ,1 )
 
         idx = np.zeros(batch_size, dtype='int32')
         count = 0
@@ -76,23 +77,23 @@ class ReplayMemoryPrior(ReplayMemory):
             index, priority, data = self.tree.get_leaf(value)
 
             # check that we are not wrapping over the cursor
-            if self.cursor <= data + 1 < self.cursor + hist_size  and data not in [hist_size - 1, self.size - 1]:
-                continue
+            #if self.cursor <= data + 1 < self.cursor + hist_size  and data not in [hist_size - 1, self.size - 1]:
+             #   continue
 
             # s_t should not contain any terminal state, so only
             # its last frame (indexed by index) can be final
-            if np.any(self.isfinal[data - (hist_size - 1):data]) and count2 < batch_size:
-                print("One..............")
-                count2 += 1
-                continue
+            #if np.any(self.isfinal[data - (hist_size - 1):data]) and count2 < batch_size:
+             #   print("One..............")
+              #  count2 += 1
+               # continue
 
-            count2 = 0
-            priorSum = self.tree.getSum(index, hist_size)
+            #count2 = 0
+            #priorSum = self.tree.getSum(index, hist_size)
             # P(j)
-            sampling_probabilities = priorSum / (self.tree.total_priority * hist_size)
+            sampling_probabilities = priority / (self.tree.total_priority )
 
             #  IS = (1/N * 1/P(i))**b /max wi == (N*P(i))**-b  /max wi
-            b_ISWeights[count, 0] = np.power(batch_size * sampling_probabilities, -self.PER_b) / max_weight
+            b_ISWeights[count, 0] = np.power(batch_size * sampling_probabilities, -self.PER_b)
             #print('cpo ',count,b_ISWeights[count, 0],max_weight,np.power(batch_size * sampling_probabilities, -self.PER_b) )
             b_idx[count] = index
 

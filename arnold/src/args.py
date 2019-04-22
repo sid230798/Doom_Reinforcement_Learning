@@ -96,6 +96,8 @@ def parse_game_args(args):
                         help="Log frequency (in seconds)")
     parser.add_argument("--fixed_q", type=bool, default=False,
                         help="Using fixed q targets.")
+    parser.add_argument("--update_freq", type=int, default=1,
+                        help="Using fixed q targets whrn to update target network.")
     parser.add_argument("--prior", type=bool, default=False,
                         help="Using Priortize Experience Replay")
     # Parse known arguments

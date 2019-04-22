@@ -67,7 +67,7 @@ def main(parser, args, parameter_server=None):
     params.episode_time = None  # episode maximum duration (in seconds)
     params.eval_freq = 20000    # time (in iterations) between 2 evaluations
     params.eval_time = .2      # evaluation time (in seconds)
-    params.update_freq = 20000    # time (in iterations) between 2 updations of Q-targets.
+    # params.update_freq = 20000    # time (in iterations) between 2 updations of Q-targets.
 
     # log experiment parameters
     with open(os.path.join(params.dump_path, 'params.pkl'), 'wb') as f:
