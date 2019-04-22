@@ -36,22 +36,16 @@ class Model(tf.keras.Model):
         Qvals = self.critic(x)
         return action_prob, Qvals
 
-    def action_value(self, obs, training=True):
-        global exploration_rate
-
+    def action_value(self, obs, batch, training=True):
         logits, value = self.predict(obs)
-        # if not training:
-        #     action = np.argmax(logits, axis=1)
-        #     return action[0], np.squeeze(value, axis=-1)
-        action = self.dist.predict(logits)
-        # if np.random.uniform() < exploration_rate or training:
-        #     action = self.dist.predict(logits)
-        #     exploration_rate = change_rate()
-        #     print("\t\t\tExploring {}".format(exploration_rate), end='\r')
-        # else:
-        #     action = np.argmax(logits, axis=1)
+        # print("logits = {}, action = {}".format(logits, action))
 
-        return np.squeeze(action, axis=-1), np.squeeze(value, axis=-1)
+        if not training or batch > UPDATES / 2:
+            action = self.dist.predict(logits)
+            return np.squeeze(action, axis=-1), np.squeeze(value, axis=-1)
+        else:
+            action = np.random.choice(logits.shape[1], 1)
+            return np.squeeze(action, axis=-1), np.squeeze(value, axis=-1)
 
 
 class GymModel(Model):
@@ -77,25 +71,25 @@ class VizdoomModel(Model):
     def __init__(self, num_actions):
         super().__init__()
         self.actor = keras.Sequential([
-            keras.layers.Conv2D(kernel_size=[5, 5], activation=tf.nn.relu, filters=2,
+            keras.layers.Conv2D(kernel_size=[5, 5], activation=tf.nn.tanh, filters=2,
                                 bias_initializer=tf.constant_initializer(0.1), strides=[1, 1]),
             # keras.layers.Conv2D(kernel_size=[3, 3], activation=tf.nn.relu, filters=1,
             #                     bias_initializer=tf.constant_initializer(0.1), strides=[2, 2]),
             keras.layers.MaxPool2D(pool_size=5),
             keras.layers.Flatten(),
-            keras.layers.Dense(128, activation=tf.nn.relu),
+            keras.layers.Dense(128, activation=tf.nn.tanh),
             # keras.layers.Dense(64, activation=tf.nn.relu),
             keras.layers.Dense(num_actions),
         ])
 
         self.critic = keras.Sequential([
-            keras.layers.Conv2D(kernel_size=[5, 5], activation=tf.nn.relu, filters=2,
+            keras.layers.Conv2D(kernel_size=[5, 5], activation=tf.nn.tanh, filters=2,
                                 bias_initializer=tf.constant_initializer(0.1), strides=[1, 1]),
             # keras.layers.Conv2D(kernel_size=[3, 3], activation=tf.nn.relu, filters=32,
             #                     bias_initializer=tf.constant_initializer(0.1), strides=[2, 2]),
             keras.layers.MaxPool2D(pool_size=5),
             keras.layers.Flatten(),
-            keras.layers.Dense(128, activation=tf.nn.relu),
+            keras.layers.Dense(128, activation=tf.nn.tanh),
             # keras.layers.Dense(64, activation=tf.nn.relu),
             keras.layers.Dense(1),
         ])
@@ -124,7 +118,7 @@ class A2CAgent:
             print("Training {}".format(update), end='\r')
             for step in range(BATCH_SIZE):
                 observations[step] = next_obs.copy()
-                actions[step], values[step] = self.model.action_value(next_obs[None, :])
+                actions[step], values[step] = self.model.action_value(next_obs[None, :], batch=update)
                 next_obs, rewards[step], dones[step], _ = env.step(actions[step])
 
                 episode_reward[-1] += rewards[step]
@@ -132,7 +126,7 @@ class A2CAgent:
                     episode_reward.append(0.0)
                     next_obs = env.reset()
 
-            _, next_value = self.model.action_value(next_obs[None, :])
+            _, next_value = self.model.action_value(next_obs[None, :], batch=update)
             returns, advs = self._returns_advantages(rewards, dones, values, next_value)
             act_adv = np.concatenate([actions[:, None], advs[:, None]], axis=-1)
             losses = self.model.train_on_batch(observations, [act_adv, returns])
