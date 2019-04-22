@@ -13,7 +13,7 @@ from settings import *
 
 exploration_rate = EXPLORATION_RATE
 def change_rate():
-    if exploration_rate < 0.4:
+    if exploration_rate < 0.5:
         return exploration_rate
     else:
         return exploration_rate * EXPLORATION_DECAY_RATE
@@ -40,16 +40,16 @@ class Model(tf.keras.Model):
         global exploration_rate
 
         logits, value = self.predict(obs)
-        if not training:
-            action = np.argmax(logits, axis=1)
-            return action[0], np.squeeze(value, axis=-1)
-
-        if np.random.uniform() < exploration_rate:
-            action = self.dist.predict(logits)
-            exploration_rate = change_rate()
-            print("\t\t\t\t\tExploring {}".format(exploration_rate), end='\r')
-        else:
-            action = np.argmax(logits, axis=1)
+        # if not training:
+        #     action = np.argmax(logits, axis=1)
+        #     return action[0], np.squeeze(value, axis=-1)
+        action = self.dist.predict(logits)
+        # if np.random.uniform() < exploration_rate or training:
+        #     action = self.dist.predict(logits)
+        #     exploration_rate = change_rate()
+        #     print("\t\t\tExploring {}".format(exploration_rate), end='\r')
+        # else:
+        #     action = np.argmax(logits, axis=1)
 
         return np.squeeze(action, axis=-1), np.squeeze(value, axis=-1)
 
@@ -77,24 +77,26 @@ class VizdoomModel(Model):
     def __init__(self, num_actions):
         super().__init__()
         self.actor = keras.Sequential([
-            keras.layers.Conv2D(kernel_size=[6, 6], activation=tf.nn.relu, filters=32,
-                                bias_initializer=tf.constant_initializer(0.1), strides=[3, 3]),
-            keras.layers.Conv2D(kernel_size=[3, 3], activation=tf.nn.relu, filters=32,
-                                bias_initializer=tf.constant_initializer(0.1), strides=[2, 2]),
+            keras.layers.Conv2D(kernel_size=[5, 5], activation=tf.nn.relu, filters=2,
+                                bias_initializer=tf.constant_initializer(0.1), strides=[1, 1]),
+            # keras.layers.Conv2D(kernel_size=[3, 3], activation=tf.nn.relu, filters=1,
+            #                     bias_initializer=tf.constant_initializer(0.1), strides=[2, 2]),
+            keras.layers.MaxPool2D(pool_size=5),
             keras.layers.Flatten(),
             keras.layers.Dense(128, activation=tf.nn.relu),
-            keras.layers.Dense(64, activation=tf.nn.relu),
+            # keras.layers.Dense(64, activation=tf.nn.relu),
             keras.layers.Dense(num_actions),
         ])
 
         self.critic = keras.Sequential([
-            keras.layers.Conv2D(kernel_size=[6, 6], activation=tf.nn.relu, filters=32,
-                                bias_initializer=tf.constant_initializer(0.1), strides=[3, 3]),
-            keras.layers.Conv2D(kernel_size=[3, 3], activation=tf.nn.relu, filters=32,
-                                bias_initializer=tf.constant_initializer(0.1), strides=[2, 2]),
+            keras.layers.Conv2D(kernel_size=[5, 5], activation=tf.nn.relu, filters=2,
+                                bias_initializer=tf.constant_initializer(0.1), strides=[1, 1]),
+            # keras.layers.Conv2D(kernel_size=[3, 3], activation=tf.nn.relu, filters=32,
+            #                     bias_initializer=tf.constant_initializer(0.1), strides=[2, 2]),
+            keras.layers.MaxPool2D(pool_size=5),
             keras.layers.Flatten(),
             keras.layers.Dense(128, activation=tf.nn.relu),
-            keras.layers.Dense(64, activation=tf.nn.relu),
+            # keras.layers.Dense(64, activation=tf.nn.relu),
             keras.layers.Dense(1),
         ])
 

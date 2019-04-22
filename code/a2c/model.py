@@ -28,5 +28,7 @@ def actor_critic(env, ckpt="5"):
         agent = A2CAgent(model)
 
     reward_history = agent.train(env)
+    for i in range(len(reward_history)):
+        print("{}.) {}".format(i, reward_history[i]))
     print('Training finished...')
-    print("{} out of 200".format(agent.test(env)))
+    print("{} out of 100".format(agent.test(env)))
